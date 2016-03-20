@@ -56,12 +56,15 @@ instance Yesod App where
         120    -- timeout in minutes
         "config/client_session_key.aes"
 
-    -- Yesod Middleware allows you to run code before and after each handler function.
-    -- The defaultYesodMiddleware adds the response header "Vary: Accept, Accept-Language" and performs authorization checks.
-    -- Some users may also want to add the defaultCsrfMiddleware, which:
+    -- Yesod Middleware allows you to run code before and after each handler
+    -- function. The defaultYesodMiddleware adds the response header "Vary:
+    -- Accept, Accept-Language" and performs authorization checks. Some users
+    -- may also want to add the defaultCsrfMiddleware, which:
     --   a) Sets a cookie with a CSRF token in it.
-    --   b) Validates that incoming write requests include that token in either a header or POST parameter.
-    -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
+    --   b) Validates that incoming write requests include that token in either
+    --      a header or POST parameter.
+    -- For details, see the CSRF documentation in the Yesod.Core.Handler module
+    -- of the yesod-core package.
     yesodMiddleware = defaultYesodMiddleware
 
     defaultLayout widget = do
