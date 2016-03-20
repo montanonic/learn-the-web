@@ -6,4 +6,4 @@ database:
   # something like:
   #
   #   database: "_env:PGDATABASE:learn-yesod_LOWER_test"
-  database: learn-yesod_LOWER_test
+  database: learnyesod_test
