@@ -1,4 +1,4 @@
-StaticR only works when each connector-piece of a file is referred to by a `_`
+`StaticR` only works when each connector-piece of a file is referred to by a `_`
 character. So to refer to something like `bootstrap-theme.min.css` you would
 write `bootstrap_theme_min_css`.
 
