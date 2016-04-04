@@ -1,17 +1,46 @@
+--
+-- ** User Information
+--
+
 User
     ident Text
-    password Text Maybe
-    UniqueUser ident
-    deriving Typeable
-Email
-    email Text
-    userId UserId Maybe
-    verkey Text Maybe
-    UniqueEmail email
-Comment json -- Adding "json" causes ToJSON and FromJSON instances to be derived.
-    message Text
-    userId UserId Maybe
-    deriving Eq
-    deriving Show
+    username Text
+    firstName Text Maybe
+    lastName Text Maybe
+    createdAt UTCTime
 
- -- By default this file is used in Model.hs (which is imported by Foundation.hs)
+    UniqueUser ident
+    UniqueUsername username
+    deriving Typeable
+
+-- | We keep email a separate entity because we don't necessarily want to
+-- require users to give us their emails, which would typically mean that we
+-- would make the field nullable. But we also want to enforce that emails be
+-- unique, and nullable fields cannot have Uniqueness constraints in Persistent,
+-- so we instead store emails in a separate entity.
+--
+-- One other benefit to keep Email a separate entity is if deciding to have an
+-- email-based authentication mechanism, which would require additional fields
+-- to keep track of email verification.
+Email
+    userId UserId
+    email Text
+    verkey Text Maybe
+
+    UniqueEmail email
+
+--
+-- ** Guide to the Web
+--
+
+Chapter
+    topic Text
+
+
+Section
+
+
+Padding
+    sectionId SectionId -- padding is attached to a section
+    before Text Maybe -- this content goes before a section
+    after Text Maybe -- this content goes after a section

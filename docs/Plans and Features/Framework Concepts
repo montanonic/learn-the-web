@@ -1,0 +1,11 @@
+# Framework Concepts
+
+Where `Framework Dictionaries` provides a focused explanation of a framework
+down to the level of a function or a class, `Concepts` tackles paradigms about
+using the framework itself. The Yesod Book, for example, would largely fall
+under the `Concepts` section, as it explains how to use the framework in
+general, and why it was implemented in particular ways.
+
+Concepts will consist of Chapters and Sections just like the Guide to the Web,
+however there will be no need for Padding, as the information contained here
+will be framework-specific anyways.

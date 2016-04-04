@@ -1,3 +1,9 @@
-$maybe msg <- mmsg
-  <div #message>#{msg}
+$if (not . null) msgs
+  <!-- Each message added is prepended to the list. Hence, to get the
+  messages to display in the order that they actually happened, we must
+  reverse the list. -->
+  $forall (status, msg) <- reverse msgs
+    <div .alert .alert-#{status} role=alert>#{msg}
+      <button type=button class=close data-dismiss=alert aria-label=Close>
+        <span aria-hidden=true>&times;
 ^{widget}

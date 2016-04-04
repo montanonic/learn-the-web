@@ -1,0 +1,5 @@
+<h1.jumbotron>
+  Welcome to this Website!
+
+<h3>
+  <a href=@{AuthR LoginR}>Login or Create an Account

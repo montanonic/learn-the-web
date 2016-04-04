@@ -4,7 +4,7 @@ import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
-import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
+import Yesod.Auth.Dummy     (authDummy)
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
@@ -37,10 +37,47 @@ data App = App
 -- type Widget = WidgetT App IO ()
 mkYesodData "App" $(parseRoutesFile "config/routes")
 
+--
+-- ** Convenient types
+--
+
+-- | Actions which only require access to the database connection can be given
+-- type @DB a@ (as opposed to @YesodDB App a@). This allows them to also be
+-- called in tests. Idea courtesy of:
+-- https://github.com/thoughtbot/carnival/blob/e78b8cdebecfdbdc19627523fe7b85b6ca61d426/Settings.hs
+type DB a = forall (m :: * -> *).
+    (MonadIO m, MonadThrow m, Functor m) => SqlPersistT m a
+
+-- | Persistent Constraints
+type PC val = (PersistEntity val, PersistEntityBackend val ~ SqlBackend)
+
 -- | A convenient synonym for creating forms.
 type Form x = Html -> MForm (HandlerT App IO) (FormResult x, Widget)
 
--- Please see the documentation for the Yesod typeclass. There are a number
+--
+-- ** User Creation
+--
+
+-- | Inserts a User with the following fields into the database, throwing an
+-- exception if a User with the same unique identifier already exists.
+createUser :: Text -> Text -> Maybe Text -> Maybe Text -> UTCTime
+            -> DB (Maybe UserId)
+createUser ident username mfirstName mlastName createdAt =
+    -- in the future, use the code from replaceUnique to return the specifc
+    -- fields that are failing (ident, username, or both), rather than using
+    -- a catch-all like insertUnique.
+    insertUnique $ User ident username mfirstName mlastName createdAt
+
+-- | Only uses required fields to create a User.
+createMinimalUser :: Text -> Text -> UTCTime -> DB (Maybe UserId)
+createMinimalUser ident username createdAt =
+    createUser ident username Nothing Nothing createdAt
+
+--
+-- ** Typeclasses
+--
+
+-- | Please see the documentation for the Yesod typeclass. There are a number
 -- of settings which can be configured by overriding methods here.
 instance Yesod App where
     -- Controls the base of generated URLs. For more information on modifying,
@@ -65,11 +102,11 @@ instance Yesod App where
     --      a header or POST parameter.
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module
     -- of the yesod-core package.
-    yesodMiddleware = defaultYesodMiddleware
+    yesodMiddleware = defaultYesodMiddleware -- . defaultCsrfMiddleware
 
     defaultLayout widget = do
         master <- getYesod
-        mmsg <- getMessage
+        msgs <- getMessages
 
         -- We break up the default layout into two components:
         -- default-layout is the contents of the body tag, and
@@ -79,6 +116,7 @@ instance Yesod App where
 
         pc <- widgetToPageContent $ do
             addStylesheet $ StaticR css_bootstrap_min_css
+            addScript $ StaticR js_bootstrap_min_js
             $(widgetFile "default-layout")
         withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
 
@@ -139,17 +177,30 @@ instance YesodAuth App where
     -- Override the above two destinations when a Referer: header is present
     redirectToReferer _ = True
 
+    -- simple authentication function that allows for easy logins and account
+    -- creation. Absolutely, 0% what the live version should be, but useful for
+    -- development.
+    --
+    -- Newly created users using this method will have their username set to
+    -- their unique authDummy identifier.
     authenticate creds = runDB $ do
-        x <- getBy $ UniqueUser $ credsIdent creds
+        let ident = credsIdent creds
+        x <- getBy $ UniqueUser ident
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
-                { userIdent = credsIdent creds
-                , userPassword = Nothing
-                }
+            Nothing -> do
+                now <- liftIO getCurrentTime
+                muid <- do
+                    muid <- createMinimalUser ident ident now
+                    addMessageSuccess [shamlet|Account created|]
+                    return muid
+                maybe (return $ ServerError "An account with the same\
+                    \ identifier or username already exists")
+                    (return . Authenticated) muid
 
-    -- You can add other plugins like Google Email, email or OAuth here
-    authPlugins _ = [authOpenId Claimed []]
+    -- A proper authentication system isn't priority until the website is ready
+    -- for Alpha/Beta. Until then, we'll be using authDummy.
+    authPlugins _ = [ authDummy ]
 
     authHttpManager = getHttpManager
 
