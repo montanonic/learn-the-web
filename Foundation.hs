@@ -190,13 +190,15 @@ instance YesodAuth App where
             Just (Entity uid _) -> return $ Authenticated uid
             Nothing -> do
                 now <- liftIO getCurrentTime
-                muid <- do
-                    muid <- createMinimalUser ident ident now
-                    addMessageSuccess [shamlet|Account created|]
-                    return muid
-                maybe (return $ ServerError "An account with the same\
-                    \ identifier or username already exists")
-                    (return . Authenticated) muid
+                muid <- createMinimalUser ident ident now
+                case muid of
+                    Just uid -> do
+                        addMessageSuccess [shamlet|Account created|]
+                        return $ Authenticated uid
+
+                    Nothing -> return $ ServerError "An account with the same\
+                        \ identifier or username already exists."
+
 
     -- A proper authentication system isn't priority until the website is ready
     -- for Alpha/Beta. Until then, we'll be using authDummy.

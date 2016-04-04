@@ -35,7 +35,16 @@ Email
 
 Chapter
     topic Text
+    intro Text
 
+    contributors [UserId]
+
+
+    prerequisites [ChapterId] SafeToRemove -- what, if any, Chapters should be
+      -- read before this one to get the most out of this chapter. This probably
+      -- deserves its own entity, as we'd probably want to give the user more
+      -- specific guidelines than "read these whole chapters", and to also use
+      -- prereqs in other entitites as well.
 
 Section
 
